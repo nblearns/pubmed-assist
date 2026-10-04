@@ -4,13 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from agents.researcher import run_researcher  # noqa: E402 — load_dotenv must run first
-
-DISCLAIMER = (
-  "\n---\n"
-  "DISCLAIMER: This is a research-summary tool, not medical advice. "
-  "It does not replace consultation with a qualified healthcare professional."
-)
+from pipeline import run_pipeline  # noqa: E402 — load_dotenv must run first
 
 
 def main():
@@ -28,10 +22,9 @@ def main():
 
     print("\nSearching PubMed...\n")
     try:
-      answer, papers = run_researcher(question)
-      print(f"\n{answer}")
-      print(DISCLAIMER)
-      print(f"\n[{len(papers)} paper(s) retrieved from PubMed]")
+      result = run_pipeline(question)
+      print(f"\n{result['answer']}")
+      print(f"\n[{len(result['papers'])} paper(s) retrieved from PubMed]")
     except Exception as exc:
       print(f"Error: {exc}", file=sys.stderr)
     print()
