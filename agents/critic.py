@@ -2,9 +2,10 @@ import json
 import re
 
 from anthropic import Anthropic
-from config import CRITIC_MODEL
+from config import ANTHROPIC_API_KEY, CRITIC_MODEL
 
-client = Anthropic()
+def _client() -> Anthropic:
+  return Anthropic(api_key=ANTHROPIC_API_KEY)
 
 CRITIC_SYSTEM_PROMPT = """\
 You are a strict fact-checking reviewer. You receive a draft answer and the \
@@ -85,7 +86,7 @@ def review_answer(draft: str, papers: list[dict]) -> dict:
   Returns {"overall": "pass" | "revise", "claims": [...], "flagged": [...]}.
   """
   user = f"<papers>{json.dumps(papers)}</papers>\n<draft>{draft}</draft>"
-  response = client.messages.create(
+  response = _client().messages.create(
     model=CRITIC_MODEL,
     max_tokens=4096,
     system=CRITIC_SYSTEM_PROMPT,

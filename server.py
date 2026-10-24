@@ -1,10 +1,9 @@
-from dotenv import load_dotenv
+from config import ANTHROPIC_API_KEY  # triggers key load from .env before anything else
 
-load_dotenv()  # must run before pipeline imports so ANTHROPIC_API_KEY is set
+print(f"[startup] API key: {ANTHROPIC_API_KEY[:20]}... (len={len(ANTHROPIC_API_KEY)})")
 
-from flask import Flask, jsonify, request, send_from_directory  # noqa: E402
-
-from pipeline import run_pipeline  # noqa: E402
+from flask import Flask, jsonify, request, send_from_directory
+from pipeline import run_pipeline
 
 app = Flask(__name__, static_folder="static")
 
@@ -32,5 +31,5 @@ def ask():
 
 
 if __name__ == "__main__":
-  print("PubMedAssist — http://localhost:5000")
-  app.run(port=5000)
+  print("PubMedAssist — http://localhost:8080")
+  app.run(host="0.0.0.0", port=8080)

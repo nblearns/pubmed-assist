@@ -1,10 +1,11 @@
 import json
 
 from anthropic import Anthropic
-from config import MAX_TOOL_ROUNDS, MODEL
+from config import ANTHROPIC_API_KEY, MAX_TOOL_ROUNDS, MODEL
 from tools.pubmed import search_pubmed
 
-client = Anthropic()
+def _client() -> Anthropic:
+  return Anthropic(api_key=ANTHROPIC_API_KEY)
 
 SYSTEM_PROMPT = """\
 You are a biomedical research assistant. Answer the user's question using ONLY \
@@ -68,7 +69,7 @@ def run_researcher(question: str) -> tuple[str, list[dict]]:
   papers_used: list[dict] = []
 
   for _ in range(MAX_TOOL_ROUNDS):
-    response = client.messages.create(
+    response = _client().messages.create(
       model=MODEL,
       max_tokens=2048,
       system=SYSTEM_PROMPT,
@@ -147,7 +148,7 @@ def revise_answer(
     f"<flagged_claims>{json.dumps(flagged)}</flagged_claims>\n"
     f"{instruction}"
   )
-  response = client.messages.create(
+  response = _client().messages.create(
     model=MODEL,
     max_tokens=2048,
     system=REVISE_PROMPT,

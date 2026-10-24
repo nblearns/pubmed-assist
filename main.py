@@ -1,8 +1,9 @@
 import sys
 
+from pathlib import Path
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(Path(__file__).parent / ".env")
 
 from pipeline import run_pipeline  # noqa: E402 — load_dotenv must run first
 
