@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PubMedAssist</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --blue: #1a5f7a;
+      --blue-dark: #134d64;
+      --blue-light: #e8f4f8;
+      --grey-50: #f8f9fa;
+      --grey-100: #e9ecef;
+      --grey-400: #adb5bd;
+      --grey-500: #6c757d;
+      --grey-800: #343a40;
+      --grey-900: #212529;
+      --amber-bg: #fff8e1;
+      --amber-border: #ffe082;
+      --amber-text: #5d4037;
+      --yellow-bg: #fff3cd;
+      --yellow-border: #ffc107;
+      --yellow-text: #856404;
+      --red-bg: #fff5f5;
+      --red-border: #fc8181;
+      --red-text: #c53030;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,0.09);
+      --shadow-md: 0 2px 8px rgba(0,0,0,0.10);
+      --radius: 10px;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: var(--grey-50);
+      color: var(--grey-900);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    /* ── Header ─────────────────────────────────────────── */
+    header {
+      background: var(--blue);
+      color: #fff;
+      padding: 1.4rem 2rem;
+    }
+    header h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; }
+    header p  { opacity: .75; font-size: .88rem; margin-top: .2rem; }
+
+    /* ── Main container ──────────────────────────────────── */
+    main {
+      max-width: 800px;
+      margin: 2rem auto;
+      padding: 0 1.25rem 4rem;
+    }
+
+    /* ── Question card ───────────────────────────────────── */
+    .ask-card {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 1.4rem 1.5rem;
+      box-shadow: var(--shadow-sm);
+    }
+
+    textarea {
+      width: 100%;
+      border: 2px solid var(--grey-100);
+      border-radius: 8px;
+      padding: .7rem .9rem;
+      font: inherit;
+      font-size: .97rem;
+      resize: vertical;
+      min-height: 88px;
+      outline: none;
+      transition: border-color .18s;
+      color: var(--grey-900);
+    }
+    textarea:focus { border-color: var(--blue); }
+    textarea::placeholder { color: var(--grey-400); }
+
+    .ask-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: .9rem;
+      gap: 1rem;
+    }
+    .ask-hint {
+      font-size: .82rem;
+      color: var(--grey-500);
+    }
+
+    button[type="submit"] {
+      flex-shrink: 0;
+      background: var(--blue);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: .55rem 1.4rem;
+      font: inherit;
+      font-size: .95rem;
+      cursor: pointer;
+      transition: background .18s;
+    }
+    button[type="submit"]:hover:not(:disabled) { background: var(--blue-dark); }
+    button[type="submit"]:disabled { background: var(--grey-400); cursor: not-allowed; }
+
+    /* ── Loading ─────────────────────────────────────────── */
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 2.5rem 1rem;
+      color: var(--grey-500);
+    }
+    .spinner {
+      width: 38px; height: 38px;
+      border: 3px solid var(--grey-100);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin .75s linear infinite;
+      margin: 0 auto .9rem;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-status { font-size: .95rem; }
+    .loading-timer  { font-size: .82rem; margin-top: .2rem; min-height: 1.2em; }
+
+    /* ── Error ───────────────────────────────────────────── */
+    .error-box {
+      display: none;
+      background: var(--red-bg);
+      border: 1px solid var(--red-border);
+      border-radius: var(--radius);
+      padding: .9rem 1.1rem;
+      color: var(--red-text);
+      margin-top: 1.25rem;
+      font-size: .93rem;
+    }
+
+    /* ── Results ─────────────────────────────────────────── */
+    .results { display: none; margin-top: 1.5rem; }
+
+    .stripped-notice {
+      display: none;
+      background: var(--yellow-bg);
+      border: 1px solid var(--yellow-border);
+      border-radius: var(--radius);
+      padding: .7rem 1rem;
+      color: var(--yellow-text);
+      font-size: .88rem;
+      margin-bottom: 1rem;
+    }
+
+    /* Answer */
+    .answer-card {
+      background: #fff;
+      border-radius: var(--radius);
+      padding: 1.5rem 1.75rem;
+      box-shadow: var(--shadow-sm);
+      margin-bottom: 1rem;
+    }
+    .section-label {
+      font-size: .75rem;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--grey-500);
+      margin-bottom: .9rem;
+      font-weight: 600;
+    }
+    .answer-body { color: var(--grey-800); font-size: .97rem; line-height: 1.75; }
+    .answer-body p { margin-bottom: .7rem; }
+    .answer-body p:last-child { margin-bottom: 0; }
+
+    /* Inline citations */
+    .cit {
+      background: var(--blue-light);
+      color: var(--blue);
+      padding: .1em .35em;
+      border-radius: 4px;
+      font-size: .88em;
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    /* Papers */
+    .papers-section { margin-bottom: 1rem; }
+    .papers-section .section-label { margin-bottom: .65rem; }
+
+    .paper-card {
+      background: #fff;
+      border-radius: 8px;
+      padding: .85rem 1.1rem .85rem 1.3rem;
+      box-shadow: var(--shadow-sm);
+      border-left: 3px solid var(--blue);
+      margin-bottom: .5rem;
+    }
+    .paper-title { font-weight: 600; font-size: .93rem; color: var(--grey-900); margin-bottom: .25rem; }
+    .paper-meta  { font-size: .82rem; color: var(--grey-500); }
+    .paper-pmid  { font-size: .78rem; color: var(--blue); margin-top: .25rem; font-weight: 500; }
+
+    /* Disclaimer */
+    .disclaimer {
+      background: var(--amber-bg);
+      border: 1px solid var(--amber-border);
+      border-radius: var(--radius);
+      padding: .75rem 1rem;
+      font-size: .84rem;
+      color: var(--amber-text);
+      line-height: 1.55;
+    }
+    .disclaimer strong { font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>PubMedAssist</h1>
+    <p>Research answers grounded strictly in peer-reviewed PubMed literature</p>
+  </header>
+
+  <main>
+
+    <div class="ask-card">
+      <form id="askForm">
+        <textarea
+          id="questionInput"
+          placeholder="e.g. What are the effects of sleep deprivation on working memory?"
+          autofocus
+        ></textarea>
+        <div class="ask-footer">
+          <span class="ask-hint">Ctrl + Enter to submit &nbsp;·&nbsp; Answers cite only retrieved abstracts</span>
+          <button type="submit" id="submitBtn">Ask PubMed</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <div class="loading-status" id="loadingStatus">Searching PubMed&hellip;</div>
+      <div class="loading-timer" id="loadingTimer"></div>
+    </div>
+
+    <div class="error-box" id="errorBox"></div>
+
+    <div class="results" id="results">
+
+      <div class="stripped-notice" id="strippedNotice">
+        Some claims could not be verified against the retrieved abstracts and were removed.
+      </div>
+
+      <div class="answer-card">
+        <div class="section-label">Answer</div>
+        <div class="answer-body" id="answerBody"></div>
+      </div>
+
+      <div class="papers-section" id="papersSection">
+        <div class="section-label" id="papersLabel"></div>
+        <div id="papersList"></div>
+      </div>
+
+      <div class="disclaimer">
+        <strong>Disclaimer:</strong> This is a research-summary tool, not medical advice.
+        It does not replace consultation with a qualified healthcare professional.
+      </div>
+
+    </div>
+
+  </main>
+
+  <script>
+    const form          = document.getElementById('askForm');
+    const input         = document.getElementById('questionInput');
+    const submitBtn     = document.getElementById('submitBtn');
+    const loading       = document.getElementById('loading');
+    const loadingStatus = document.getElementById('loadingStatus');
+    const loadingTimer  = document.getElementById('loadingTimer');
+    const errorBox      = document.getElementById('errorBox');
+    const results       = document.getElementById('results');
+    const answerBody    = document.getElementById('answerBody');
+    const papersList    = document.getElementById('papersList');
+    const papersSection = document.getElementById('papersSection');
+    const papersLabel   = document.getElementById('papersLabel');
+    const strippedNote  = document.getElementById('strippedNotice');
+
+    const PHASES = [
+      { after:  0, text: 'Searching PubMed…' },
+      { after:  7, text: 'Reading abstracts…' },
+      { after: 18, text: 'Critic reviewing answer…' },
+      { after: 30, text: 'Finalising…' },
+    ];
+
+    let timerHandle = null;
+
+    function startTimer() {
+      const t0 = Date.now();
+      timerHandle = setInterval(() => {
+        const s = Math.floor((Date.now() - t0) / 1000);
+        loadingTimer.textContent = `${s}s elapsed`;
+        for (let i = PHASES.length - 1; i >= 0; i--) {
+          if (s >= PHASES[i].after) { loadingStatus.textContent = PHASES[i].text; break; }
+        }
+      }, 500);
+    }
+
+    function stopTimer() {
+      clearInterval(timerHandle);
+      timerHandle = null;
+    }
+
+    function escHtml(s) {
+      const d = document.createElement('div');
+      d.textContent = s || '';
+      return d.innerHTML;
+    }
+
+    // Highlight (Author et al., YYYY) and (Author, YYYY) patterns
+    function highlightCitations(html) {
+      return html.replace(/\(([^)]{3,60}?\d{4}[^)]{0,10})\)/g, (m, inner) =>
+        `<span class="cit">(${escHtml(inner)})</span>`
+      );
+    }
+
+    function formatAnswer(text) {
+      return text
+        .split(/\n{2,}/)
+        .map(block => {
+          const safe = escHtml(block).replace(/\n/g, '<br>');
+          return `<p>${highlightCitations(safe)}</p>`;
+        })
+        .join('');
+    }
+
+    function renderPapers(papers) {
+      if (!papers || papers.length === 0) {
+        papersSection.style.display = 'none';
+        return;
+      }
+      papersSection.style.display = 'block';
+      papersLabel.textContent = `${papers.length} Paper${papers.length === 1 ? '' : 's'} Retrieved`;
+      papersList.innerHTML = papers.map(p => `
+        <div class="paper-card">
+          <div class="paper-title">${escHtml(p.title)}</div>
+          <div class="paper-meta">${escHtml(p.authors)} &middot; ${escHtml(p.journal)} &middot; ${escHtml(p.year)}</div>
+          <div class="paper-pmid">PMID&nbsp;${escHtml(p.pmid)}</div>
+        </div>
+      `).join('');
+    }
+
+    async function handleSubmit(e) {
+      e.preventDefault();
+      const question = input.value.trim();
+      if (!question) return;
+
+      // Reset state
+      results.style.display    = 'none';
+      errorBox.style.display   = 'none';
+      loading.style.display    = 'block';
+      submitBtn.disabled       = true;
+      loadingStatus.textContent = PHASES[0].text;
+      loadingTimer.textContent  = '';
+      startTimer();
+
+      try {
+        const res  = await fetch('/ask', {
+          method:  'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body:    JSON.stringify({ question }),
+        });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+          errorBox.textContent  = `Error: ${data.error || 'Something went wrong.'}`;
+          errorBox.style.display = 'block';
+          return;
+        }
+
+        answerBody.innerHTML             = formatAnswer(data.answer_body || '');
+        strippedNote.style.display       = data.stripped ? 'block' : 'none';
+        renderPapers(data.papers);
+        results.style.display            = 'block';
+        results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+      } catch (err) {
+        errorBox.textContent  = `Network error: ${err.message}`;
+        errorBox.style.display = 'block';
+      } finally {
+        loading.style.display  = 'none';
+        submitBtn.disabled     = false;
+        stopTimer();
+      }
+    }
+
+    form.addEventListener('submit', handleSubmit);
+
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+        form.dispatchEvent(new Event('submit', { cancelable: true }));
+      }
+    });
+  </script>
+
+</body>
+</html>

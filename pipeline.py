@@ -47,6 +47,7 @@ def run_pipeline(question: str) -> dict:
   )
   return {
     "answer": f"{answer}{note}{_sources(papers)}{DISCLAIMER}",
+    "answer_body": answer,  # plain answer text; web UI renders sources/disclaimer separately
     "papers": papers,
     "reviews": reviews,
     "stripped": stripped,
