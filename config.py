@@ -17,7 +17,7 @@ def _read_api_key() -> str:
 ANTHROPIC_API_KEY = _read_api_key()
 
 # Models are overridable via environment so evals can compare them.
-MODEL = os.getenv("PUBMED_ASSIST_MODEL", "claude-sonnet-4-6")
+MODEL = os.getenv("PUBMED_ASSIST_MODEL", "claude-haiku-4-5-20251001")
 CRITIC_MODEL = os.getenv("PUBMED_ASSIST_CRITIC_MODEL", MODEL)
 
 # Safety caps: stop runaway loops (and runaway cost).
